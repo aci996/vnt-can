@@ -2,7 +2,7 @@
 (another) vntcontroller with canbuss display
 
 ------------------------------
-slave / controller
+slave / vntmaster
 -----------------------------
 
 //EEPROM
@@ -19,7 +19,7 @@ slave / controller
 #include <PID_v1.h>
 
 ------------------------------
-Display
+Display / controller
 ------------------------------
 
 // CAN MCP2515
