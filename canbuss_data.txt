@@ -28,11 +28,11 @@
 	1 map
 	----------------	
 	
-	byte 1 						byte 2 - 7 data (A-F)
+	byte 1 					byte 2 - 7 data (A-F)
 	
 	1 mapsensor(kpa)			A 0-255					(sensor)
 	2 mapcal_min(raw)			A 0-255					(setting)
-	3 mapcal_max(raw)			data=((A*8)+B)			(setting)
+	3 mapcal_max(raw)			data=((A*8)+B)				(setting)
 	4 map_minkpa(kpa)			A (0-255)				(setting)
 	5 map_maxkpa(kpa)			A (0-255)				(setting)
 	
@@ -40,15 +40,15 @@
 	2 egt
 	----------------
 
-	byte 1 						byte 2 - 7 data (A-F)
+	byte 1 					byte 2 - 7 data (A-F)
 	
-	1 egtsensor(celcius)		data=((A*8)+B)			(sensor)
+	1 egtsensor(celcius)			data=((A*8)+B)			(sensor)
 
 	----------------
 	3 rpm
 	----------------
 	
-	byte 1 						byte 2 - 7 data (A-F)
+	byte 1 					byte 2 - 7 data (A-F)
 
 	1 rpmsensor(rpm)			data=((A*64)+B)			(sensor)
 	
@@ -56,32 +56,32 @@
 	4 throttle
 	----------------
 	
-	byte 1 						byte 2 - 7 data (A-F)
+	byte 1 					byte 2 - 7 data (A-F)
 	
-	1 tps(%)					A (0-100)				(sensor)
+	1 tps(%)				A (0-100)			(sensor)
 	
 	----------------
 	10 control boost
 	----------------
 
-	byte 1 						byte 2 - 7 data (A-F)
+	byte 1 					byte 2 - 7 data (A-F)
 	
-	1 boost_wanted(kpa)			A 0-255					(sensor)
-	2 use_static_boost(ON/OFF)	A 0-1					(setting)
-	3 boost_static(kpa)			A 0-255					(setting)
-	4 boost_wanted_min(kpa) 	A 0-255					(setting)
-	5 boost_wanted_max(kpa)		A 0-255					(setting)
-	6 tps_maxboost(%)			A 0-255					(setting)
+	1 boost_wanted(kpa)			A 0-255				(sensor)
+	2 use_static_boost(ON/OFF)		A 0-1				(setting)
+	3 boost_static(kpa)			A 0-255				(setting)
+	4 boost_wanted_min(kpa) 		A 0-255				(setting)
+	5 boost_wanted_max(kpa)			A 0-255				(setting)
+	6 tps_maxboost(%)			A 0-255				(setting)
 
 	----------------
 	 100 cutoff
 	----------------
 	
-	byte 1 						byte 2 - 7 data (A-F) 
+	byte 1 					byte 2 - 7 data (A-F) 
 	
-	1 cutoff_act(ON/OFF)		A 0-1					(sensor)		
-	2 ctrl_cutoff(ON/OFF)		A 0-1					(setting)
-	3 cutoff_boost				A 0-255					(setting)
+	1 cutoff_act(ON/OFF)			A 0-1				(sensor)		
+	2 ctrl_cutoff(ON/OFF)			A 0-1				(setting)
+	3 cutoff_boost				A 0-255				(setting)
 	4 cutoff_egt				data=((A*8)+B)			(setting)
 
 	----------------
