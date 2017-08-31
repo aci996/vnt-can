@@ -4,6 +4,19 @@
 Goals:
 See info and change settings on display/control unit over canbus network connected to sensors and vnt controller.
 
+Sensors:
+MAP
+EGT
+Throttle (TPS)
+
+Boost settings:
+Static boost
+Map boost to TPS
+MIN/MAX Boost
+
+EGT:
+Limit boost
+
 ------------------------------
 boost_controller
 -----------------------------
