@@ -2,7 +2,7 @@
 (another) vntcontroller with canbuss display.
 
 Goals:
-See info and change setings on display over canbus network connected to sensors and vnt controller.
+See info and change settings on display/control unit over canbus network connected to sensors and vnt controller.
 
 ------------------------------
 boost_controller
