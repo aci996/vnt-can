@@ -1,5 +1,8 @@
 # vnt-can
-(another) vntcontroller with canbuss display
+(another) vntcontroller with canbuss display.
+
+Goals:
+See info and change setings on display over canbus network connected to sensors and vnt controller.
 
 ------------------------------
 boost_controller
