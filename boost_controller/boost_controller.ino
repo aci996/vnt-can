@@ -25,48 +25,81 @@
 // Include
 // ************************************************
 
+//---------------
 //EEPROM
+//---------------
+
 #include <EEPROM.h>
 
+//---------------
 // CAN MCP2515
+//---------------
+
 #include <mcp_can.h>
 #include <SPI.h>
 
+//---------------
 // EGT Probe
+//---------------
+
 #include "max6675.h"
 
+//---------------
 // PID
+//---------------
+
 #include <PID_v1.h>
 
+//---------------
 // Servo
+//---------------
+
 // #include <Servo.h>
 
 // ************************************************
 // Pin definitions
 // ************************************************
 
+//---------------
 // PWM
+//---------------
+
 #define PWM_OUT 5           // PWM Output pin 5
 
+//---------------
 // Read PWM (HW debug)
+//---------------
+
 #define PWM_READ 13         // PWM Read pin 13
 
+//---------------
 // EGT
+//---------------
+
 // const byte ktcSO = 7;    // SO Digital PIN
 // const byte ktcCS = 8;    // CS Digital PIN
 // const byte ktcCLK = 9;   // CLK Digital PIN
 
+//---------------
 // Canbuss
+//---------------
+
 #define CAN0_INT 2          // Set INT to pin 2 (UNO)
 MCP_CAN CAN0(10);           // Set CS to pin 10 (UNO)
-// si   orange	ardunio icmpport	(pin 11 UNO)
-// so		brun	  ardunio icmpport	(pin 12 UNO)
-// sck	gul		  ardunio icmpport	(pin 13 UNO)
+// si     ardunio icmpport  (pin 11 UNO)
+// so     ardunio icmpport  (pin 12 UNO)
+// sck    ardunio icmpport  (pin 13 UNO)
 
+//---------------
 // MPX4250DP Preasure sensor
+//---------------
+
 #define mpx4250dp A0        // EGT Sensor Analog PIN 0
 
+//---------------
 // TPS
+//---------------
+
 #define TPS_READ A1         // TPS Analog PIN 1
 
 
@@ -74,20 +107,32 @@ MCP_CAN CAN0(10);           // Set CS to pin 10 (UNO)
 // PID Variables and constants
 // ************************************************
 
+//---------------
 //Define Variables we'll be connecting to
+//---------------
+
 double PID_Setpoint;
 double PID_Input;
 double PID_Output;
 
+//---------------
 // pid tuning parameters
+//---------------
+
 double PID_Kp;
 double PID_Ki;
 double PID_Kd;
 
+//---------------
 // Param to convert mapscale to 0-1023 analog scale
+//---------------
+
 // double pid_conv_map_maxkpa;
 
+//---------------
 //Specify the links and initial tuning parameters
+//---------------
+
 PID myPID(&PID_Input, &PID_Output, &PID_Setpoint, PID_Kp, PID_Ki, PID_Kd, DIRECT);
 
 
@@ -95,8 +140,9 @@ PID myPID(&PID_Input, &PID_Output, &PID_Setpoint, PID_Kp, PID_Ki, PID_Kd, DIRECT
 // Constants / Global variables
 // ************************************************
 
-
+//---------------
 // EEPROM addresses for persisted data
+//---------------
 
 const byte PID_Kp_Address = 0;
 const byte PID_Ki_Address = 8;
@@ -117,24 +163,42 @@ const byte tpscal_min_Address = 120;
 const byte tpscal_max_Address = 128;
 // const byte _Address = 136;
 
+//---------------
 // TEST!!!!
+//---------------
+
 int test = 0;
 
+//---------------
 // Read PWM (debug)
+//---------------
+
 static double duty;
 static double freq;
 static long highTime = 0;
 static long lowTime = 0;
 static long tempPulse;
 
+//---------------
+// Canbuss push sensordata (debug)
+//---------------
+
+bool can_push_sensordata = 1; // Default enable
+
+//---------------
 // SerialCMD
+//---------------
+
 String S_inData;
 bool S_echo = 0;
-bool S_debug_can = 0;
+bool S_debug_can_send = 0;
+bool S_debug_can_read = 0;
 bool S_debug_sensor = 0;
 bool S_debug_pwm = 0;
 
+//---------------
 // Timers
+//---------------
 
 const int Boostcontrol_Interval = 10;
 unsigned long Last_Boostcontrol_Time = 0;
@@ -145,81 +209,120 @@ unsigned long Last_Canbuss_Push_Time = 0;
 const int Serial_Log_Interval = 250;
 unsigned long Serial_Last_Log_Time = 0;
 
-
+//---------------
 // Mapsensor
+//---------------
+
 int mapsensor = 0;                    // Sensor reading
 int mapcal_min;                       // MIN Raw calibration
 int mapcal_max;                       // MAX Raw calibration
 int map_minkpa;                       // MIN Sensor reading
-int map_maxkpa;                       // Max Sensor reading
+int map_maxkpa;                       // MAX Sensor reading
 
+//---------------
 //EGT
+//---------------
+
 int egtsensor = 0;                    // EGT Sensor reading
 
+//---------------
 // Canbus
+//---------------
+
 long unsigned int canbuss_rxId;
 unsigned char canbuss_len = 0;
 unsigned char canbuss_in[8];
 unsigned char canbuss_out[8];
 // char msgString[128];               // Array to store serial string
 
+//---------------
 // Cutoff
-bool ctrl_cutoff;               // Use Cutoff
-int cutoff_boost;               // Cutoff at boost
-int cutoff_egt;                 // Cutoff at egt
-bool cutoff_act = 0;            // Cutoff activated
+//---------------
 
+bool ctrl_cutoff;                     // Use Cutoff
+int cutoff_boost;                     // Cutoff at boost
+int cutoff_egt;                       // Cutoff at egt
+bool cutoff_act = 0;                  // Cutoff activated
+
+//---------------
 // TPS
-int tps = 0;                    // Sensor reading (0-100%)
-int tpscal_min;                 // MIN Raw calibration
-int tpscal_max;                 // MAX Raw calibration
+//---------------
 
+int tps = 0;                          // Sensor reading (0-100%)
+int tpscal_min;                       // MIN Raw calibration
+int tpscal_max;                       // MAX Raw calibration
+
+//---------------
 // Boostcontrol
-bool use_static_boost;          // Use static boostvalue Yes/No
-int boost_static;               // Static boost value (kpa)
-int boost_wanted = 0;           // Wanted boost (kpa) (calculated)
-int boost_wanted_min;           // Wanted minimum boost (kpa)
-int boost_wanted_max;           // Wanted maximum boost (kpa)
-int tps_maxboost;               // tps % when we want maximum boost
+//---------------
+
+bool use_static_boost;                // Use static boostvalue Yes/No
+int boost_static;                     // Static boost value (kpa)
+int boost_wanted = 0;                 // Wanted boost (kpa) (calculated)
+int boost_wanted_min;                 // Wanted minimum boost (kpa)
+int boost_wanted_max;                 // Wanted maximum boost (kpa)
+int tps_maxboost;                     // tps % when we want maximum boost
 
 
 // ************************************************
 // Init
 // ************************************************
 
+//---------------
 // EGT
+//---------------
+
 MAX6675 ktc(9, 8, 7); // PIN def
 
+//---------------
 // Servo
+//---------------
+
 // Servo myservo;  // create servo object to control a servo
 
 // ************************************************************************************************
 // Setup
 // ************************************************************************************************
+
 void setup() {
 
   // ************************************************
   // Pinmodes
   // ************************************************
 
+  //---------------
   // Canbuss
+  //---------------
+
   pinMode(CAN0_INT, INPUT);
 
+  //---------------
   // MAP
+  //---------------
+
   pinMode(mpx4250dp, INPUT);
 
+  //---------------
   // PWM
+  //---------------
+
   pinMode(PWM_OUT, OUTPUT);
   pinMode(PWM_READ, INPUT);
 
+  //---------------
   // TPS
+  //---------------
+
   pinMode(TPS_READ, INPUT);
 
   // ************************************************
   // PWM Freq
   // ************************************************
 
+  //---------------
   //Leonardo pin5 30hz PWM (16bit port)
+  //---------------
+
   TCCR3B = 0B00000101;
   TCCR3A = 0B00000001;
 
@@ -227,7 +330,10 @@ void setup() {
   // Setup cont.
   // ************************************************
 
+  //---------------
   // Start serial
+  //---------------
+
   Serial.begin(115200);
   Serial.setTimeout(10000); // 10sek timeout
   // while (!Serial) {   // Wait for serial port to connect. Needed for native USB (Leonardo etc)
@@ -235,7 +341,10 @@ void setup() {
   // }
   Serial.println(F("Serial connection started."));
 
+  //---------------
   // Canbuss
+  //---------------
+
   // Initialize MCP2515 running at 8MHz with a baudrate of 500kb/s and the masks and filters disabled.
   Serial.println(F("Initializing MCP2515..."));
   if (CAN0.begin(MCP_ANY, CAN_500KBPS, MCP_8MHZ) == CAN_OK) Serial.println(F("MCP2515 Initialized Successfully!"));
@@ -244,22 +353,37 @@ void setup() {
   CAN0.setMode(MCP_NORMAL);   // Change to normal mode to allow messages to be transmitted.
   // Set operation mode to normal so the MCP2515 sends acks to received data.
 
+  //---------------
   // Load parameters
+  //---------------
+
   LoadParameters();
 
+  //---------------
   // Initialize the PID and related variables
+  //---------------
+
   PID_Input = mapsensor;
   PID_Setpoint = boost_wanted;
   myPID.SetTunings(PID_Kp, PID_Ki, PID_Kd);
   myPID.SetMode(AUTOMATIC);
 
+  //---------------
   //Servo
+  //---------------
+
   //myservo.attach(5);  // attaches the servo on pin 5 to the servo object
 
+  //---------------
   // Delay before loop
+  //---------------
+
   delay(500);
 
+  //---------------
   // Print help message
+  //---------------
+
   Serial.println(F(""));
   Serial.println(F("Press h for help."));
 
@@ -286,7 +410,7 @@ void loop() {
     // Get sensordata
     Get_EGT();                  // Get egt reading
     Get_Boost();                // Get map reading
-    Get_TPS();                  // Get TPS reading
+    Get_TPS();                  // Get tps reading
     Check_Cutoff();             // Check cutoff
 
     // PWM boostcontrol
@@ -565,7 +689,7 @@ void canbuss_read() {
     // *************************************
 
     // Print canbuss_in to Serial
-    if (S_debug_can == 1) {
+    if (S_debug_can_read == 1) {
       Serial.println(F(""));
       Serial.print(F("ID: "));
       Serial.println(canbuss_rxId, HEX);
@@ -608,57 +732,65 @@ void canbuss_push_Sensordata() {
   int valb;
   int val0;
 
-  // ********************
-  // mapsensor
-  // ********************
+  //---------------
+  // Check if enabled
+  //---------------
 
-  //mapsensor(kpa)      A (0-255)       (sensor)
-  canbuss_send(0x1F, 1, 1, mapsensor, 0x00, 0x00, 0x00, 0x00, 0x00);
+  if (can_push_sensordata == 1) {
 
-  //mapsensor_raw      ((A*8)+B) (0-1023)  (sensor)
-  val0 = analogRead(mpx4250dp);
-  if (val0 < 8) vala = 0;
-  else vala = (val0 * 0.125);
-  valb = (val0 - (vala * 8));
-  canbuss_send(0x1F, 1, 10, vala, valb, 0x00, 0x00, 0x00, 0x00);
-  
-  // ********************
-  // egtsensor
-  // ********************
+    // ********************
+    // mapsensor
+    // ********************
 
-  //egtsensor(celcius)    ((A*8)+B) (0-1023)  (sensor)
-  if (egtsensor < 8) vala = 0;
-  else vala = (egtsensor * 0.125);
-  valb = (egtsensor - (vala * 8));
-  canbuss_send(0x1F, 2, 1, vala, valb, 0x00, 0x00, 0x00, 0x00);
+    //mapsensor(kpa)      A (0-255)       (sensor)
+    canbuss_send(0x1F, 1, 1, mapsensor, 0x00, 0x00, 0x00, 0x00, 0x00);
 
-  // ********************
-  // TPS
-  // ********************
+    //mapsensor_raw      ((A*8)+B) (0-1023)  (sensor)
+    val0 = analogRead(mpx4250dp);
+    if (val0 < 8) vala = 0;
+    else vala = (val0 * 0.125);
+    valb = (val0 - (vala * 8));
+    canbuss_send(0x1F, 1, 10, vala, valb, 0x00, 0x00, 0x00, 0x00);
 
-  //tps(%)          A (0-100)       (sensor)
-  canbuss_send(0x1F, 4, 1, tps, 0x00, 0x00, 0x00, 0x00, 0x00);
-  
-  //tps_raw        ((A*8)+B) (0-1023)  (sensor)
-  val0 = analogRead(TPS_READ);
-  if (val0 < 8) vala = 0;
-  else vala = (val0 * 0.125);
-  valb = (val0 - (vala * 8));
-  canbuss_send(0x1F, 4, 10, vala, valb, 0x00, 0x00, 0x00, 0x00);
-  
-  // ********************
-  // Boostcontrol
-  // ********************
+    // ********************
+    // egtsensor
+    // ********************
 
-  //boost_wanted(kpa)      A (0-255)       (sensor)
-  canbuss_send(0x1F, 10, 1, boost_wanted, 0x00, 0x00, 0x00, 0x00, 0x00);
+    //egtsensor(celcius)    ((A*8)+B) (0-1023)  (sensor)
+    if (egtsensor < 8) vala = 0;
+    else vala = (egtsensor * 0.125);
+    valb = (egtsensor - (vala * 8));
+    canbuss_send(0x1F, 2, 1, vala, valb, 0x00, 0x00, 0x00, 0x00);
 
-  // ********************
-  // cutoff
-  // ********************
+    // ********************
+    // TPS
+    // ********************
 
-  //cutoff_act(ON/OFF)    A (0-1)       (sensor)
-  canbuss_send(0x1F, 100, 1, cutoff_act, 0x00, 0x00, 0x00, 0x00, 0x00);
+    //tps(%)          A (0-100)       (sensor)
+    canbuss_send(0x1F, 4, 1, tps, 0x00, 0x00, 0x00, 0x00, 0x00);
+
+    //tps_raw        ((A*8)+B) (0-1023)  (sensor)
+    val0 = analogRead(TPS_READ);
+    if (val0 < 8) vala = 0;
+    else vala = (val0 * 0.125);
+    valb = (val0 - (vala * 8));
+    canbuss_send(0x1F, 4, 10, vala, valb, 0x00, 0x00, 0x00, 0x00);
+
+    // ********************
+    // Boostcontrol
+    // ********************
+
+    //boost_wanted(kpa)      A (0-255)       (sensor)
+    canbuss_send(0x1F, 10, 1, boost_wanted, 0x00, 0x00, 0x00, 0x00, 0x00);
+
+    // ********************
+    // cutoff
+    // ********************
+
+    //cutoff_act(ON/OFF)    A (0-1)       (sensor)
+    canbuss_send(0x1F, 100, 1, cutoff_act, 0x00, 0x00, 0x00, 0x00, 0x00);
+
+  }
 
 }
 
@@ -683,19 +815,20 @@ void canbuss_send(int canbuss_send_id, byte data0, byte data1, byte pid, byte da
   canbuss_out[7] = data7;
 
   // send data:  ID = 0x100, Standard CAN Frame, Data length = 8 bytes, 'data' = array of data bytes to send
-  //  byte sndStat = CAN0.sendMsgBuf(canbuss_send_id, 0, 8, canbuss_send_data);
+  // byte sndStat = CAN0.sendMsgBuf(canbuss_send_id, 0, 8, canbuss_send_data);
   byte sndStat = CAN0.sendMsgBuf(canbuss_send_id, 0, 8, canbuss_out);
 
-  if (S_debug_can == 1) { // Serial debug
+  // *********************
+  // Serial debug
+  // *********************
+
+  if (S_debug_can_send == 1) {
     if (sndStat == CAN_OK) {
       Serial.println(F(" Canbuss Message Sent Successfully "));
-
     }
     else {
       Serial.println(F(" *** Error Sending Canbuss Message *** "));
-
     }
-
   }
 
 }
@@ -862,7 +995,6 @@ void S_Log() {
 // Debug/Read pwm
 // ************************************************
 
-
 void readPWM(int readPin) {
   highTime = 0;
   lowTime = 0;
@@ -884,35 +1016,54 @@ void readPWM(int readPin) {
 // ************************************************
 // SerialCMD (Newline activated)
 // ************************************************
+
 void serialCMD() {
 
   int S_int;
 
+  //---------------
   //   Send data only when you receive data:
+  //---------------
+
   if (Serial.available() > 0) {
 
+    //---------------
     // Read the incoming byte:
+    //---------------
+
     char recieved = Serial.read();
     S_inData += recieved;
 
+    //---------------
     // Check message after enter:
+    //---------------
+
     if (recieved == '\n') {
 
+      //---------------
       // Display Echo
+      //---------------
+
       if ( S_echo == 1) {
         Serial.print(F("Local Echo: "));
         Serial.println(S_inData);
       }
+
+      //---------------
       // Help Menu
+      //---------------
+
       if (S_inData == "h\n") {
         serialp(1); // Print line
         Serial.println(F("Global"));
         serialp(1); // Print line
         Serial.println(F("h    Help"));
         Serial.println(F("e    Echo ON/OFF"));
-        Serial.println(F("dc   Debug CAN ON/OFF"));
-        Serial.println(F("ds   Debug Sensor ON/OFF"));
-        Serial.println(F("dp   Debug PWM ON/OFF"));
+        Serial.println(F("dcr  CAN Debug Read ON/OFF"));
+        Serial.println(F("dcs  CAN Debug Send ON/OFF"));
+        Serial.println(F("dcp  CAN Push Sensordata ON/OFF"));
+        Serial.println(F("ds   Sensor Debug ON/OFF"));
+        Serial.println(F("dp   PWM Debug ON/OFF"));
         serialp(1); // Print line
         Serial.println(F("Show settings"));
         serialp(1); // Print line
@@ -931,7 +1082,11 @@ void serialCMD() {
         Serial.println(F("Spid  PID Settings"));
         serialp(1); // Print line
       }
+
+      //---------------
       // Set Echo
+      //---------------
+
       else if (S_inData == "e\n") {
         if (S_echo == 0) {
           S_echo = 1;
@@ -942,18 +1097,56 @@ void serialCMD() {
           Serial.println(F("Echo off"));
         }
       }
-      // Set Debug CAN
-      else if (S_inData == "dc\n") {
-        if (S_debug_can == 0) {
-          S_debug_can = 1;
-          Serial.println(F("Debug CAN on"));
+
+      //---------------
+      // Set Debug CAN Read
+      //---------------
+
+      else if (S_inData == "dcr\n") {
+        if (S_debug_can_read == 0) {
+          S_debug_can_read = 1;
+          Serial.println(F("Debug CAN Read on"));
         }
         else {
-          S_debug_can = 0;
-          Serial.println(F("Debug CAN off"));
+          S_debug_can_read = 0;
+          Serial.println(F("Debug CAN Read off"));
         }
       }
+
+      //---------------
+      // Set Debug CAN Send
+      //---------------
+
+      else if (S_inData == "dcs\n") {
+        if (S_debug_can_send == 0) {
+          S_debug_can_send = 1;
+          Serial.println(F("Debug CAN Send on"));
+        }
+        else {
+          S_debug_can_send = 0;
+          Serial.println(F("Debug CAN Send off"));
+        }
+      }
+
+      //---------------
+      // Set can_push_sensordata
+      //---------------
+
+      else if (S_inData == "dcp\n") {
+        if (can_push_sensordata == 0) {
+          can_push_sensordata = 1;
+          Serial.println(F("Debug CAN Push sensor on"));
+        }
+        else {
+          can_push_sensordata = 0;
+          Serial.println(F("Debug CAN Push sensor off"));
+        }
+      }
+
+      //---------------
       // Set Debug Sensor
+      //---------------
+
       else if (S_inData == "ds\n") {
         if (S_debug_sensor == 0) {
           S_debug_sensor = 1;
@@ -964,6 +1157,11 @@ void serialCMD() {
           Serial.println(F("Debug Sensor off"));
         }
       }
+
+      //---------------
+      // Set Debug PWM
+      //---------------
+
       else if (S_inData == "dp\n") {
         if (S_debug_pwm == 0) {
           S_debug_pwm = 1;
@@ -979,7 +1177,10 @@ void serialCMD() {
       // Map
       // *****************
 
+      //---------------
       // Show Map Settings
+      //---------------
+
       else if (S_inData == "smap\n") {
         serialp(1); // Print line
         Serial.print(F("mapcal_min: "));
@@ -993,13 +1194,19 @@ void serialCMD() {
         serialp(1); // Print line
       }
 
+      //---------------
       // Set Map Settings
+      //---------------
+
       else if (S_inData == "Smap\n") {
         serialp(1); // Print line
         serialp(6); // Print "Enter new value or 9999 to skip "
         serialp(1); // Print line
 
+        //---------------
         //mapcal_min
+        //---------------
+
         Serial.print(F("mapcal_min (raw): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < 255) && (S_int > 0)) {
@@ -1018,7 +1225,10 @@ void serialCMD() {
           Serial.println("255");
         }
 
+        //---------------
         //mapcal_max
+        //---------------
+
         Serial.print(F("mapcal_max (raw): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < 1023) && (S_int > 500)) {
@@ -1037,7 +1247,10 @@ void serialCMD() {
           Serial.println("1023");
         }
 
+        //---------------
         //map_minkpa
+        //---------------
+
         Serial.print(F("map_minkpa (kpa): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < 100) && (S_int >= 0)) {
@@ -1056,7 +1269,10 @@ void serialCMD() {
           Serial.println("100");
         }
 
+        //---------------
         //map_maxkpa
+        //---------------
+
         Serial.print(F("map_maxkpa (kpa): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < 500) && (S_int > 50)) {
@@ -1075,7 +1291,10 @@ void serialCMD() {
           Serial.println("500");
         }
 
+        //---------------
         // Save and exit
+        //---------------
+
         SaveParameters();
         serialp(7); // Print "*** Saved ***"
       }
@@ -1084,7 +1303,10 @@ void serialCMD() {
       // TPS
       // *****************
 
+      //---------------
       // Show TPS Settings
+      //---------------
+
       else if (S_inData == "stps\n") {
         serialp(1); // Print line
         Serial.print(F("tpscal_min: "));
@@ -1094,13 +1316,19 @@ void serialCMD() {
         serialp(1); // Print line
       }
 
+      //---------------
       // Set TPS Settings
+      //---------------
+
       else if (S_inData == "Stps\n") {
         serialp(1); // Print line
         serialp(6); // Print "Enter new value or 9999 to skip "
         serialp(1); // Print line
 
+        //---------------
         //tpscal_min
+        //---------------
+
         Serial.print(F("tpscal_min (raw): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < 255) && (S_int > 0)) {
@@ -1119,7 +1347,10 @@ void serialCMD() {
           Serial.println("255");
         }
 
+        //---------------
         //tpscal_max
+        //---------------
+
         Serial.print(F("tpscal_max (raw): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < 1023) && (S_int > 500)) {
@@ -1138,7 +1369,10 @@ void serialCMD() {
           Serial.println("1023");
         }
 
+        //---------------
         // Save and exit
+        //---------------
+
         SaveParameters();
         serialp(7); // Print "*** Saved ***"
       }
@@ -1148,7 +1382,10 @@ void serialCMD() {
       // EGT
       // *****************
 
+      //---------------
       // Show EGT Settings
+      //---------------
+
       else if (S_inData == "segt\n") {
         serialp(1); // Print line
         Serial.print(F("egtsensor: "));
@@ -1160,7 +1397,10 @@ void serialCMD() {
       // Cutoff
       // *****************
 
+      //---------------
       // Show Cutoff Settings
+      //---------------
+
       else if (S_inData == "sco\n") {
         serialp(1); // Print line
         Serial.print(F("ctrl_cutoff: "));
@@ -1172,13 +1412,19 @@ void serialCMD() {
         serialp(1); // Print line
       }
 
+      //---------------
       // Set Cutoff menu
+      //---------------
+
       else if (S_inData == "Sco\n") {
         serialp(1); // Print line
         serialp(6); // Print "Enter new value or 9999 to skip "
         serialp(1); // Print line
 
+        //---------------
         //ctrl_cutoff
+        //---------------
+
         Serial.print(F("ctrl_cutoff (1=ON/0=OFF): "));
         S_int = Serial.parseInt();          //transfer number to num
         if (S_int == 1) {
@@ -1197,7 +1443,10 @@ void serialCMD() {
           serialp(5); // Print " Skipped *out of range*"
         }
 
+        //---------------
         //cutoff_boost
+        //---------------
+
         Serial.print(F("cutoff_boost (kpa): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < map_maxkpa - 1) && (S_int > map_minkpa + 1)) {
@@ -1216,7 +1465,10 @@ void serialCMD() {
           Serial.println(map_maxkpa - 1);
         }
 
+        //---------------
         //cutoff_egt
+        //---------------
+
         Serial.print(F("cutoff_egt (C): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < 1000) && (S_int > 500)) {
@@ -1235,7 +1487,10 @@ void serialCMD() {
           Serial.println("1000");
         }
 
+        //---------------
         // Save and exit
+        //---------------
+
         SaveParameters();
         serialp(7); // Print "*** Saved ***"
       }
@@ -1244,7 +1499,10 @@ void serialCMD() {
       // Boostcontrol
       // *****************
 
+      //---------------
       // Show Settings
+      //---------------
+
       else if (S_inData == "sbc\n") {
         serialp(1); // Print line
         Serial.print(F("use_static_boost: "));
@@ -1260,13 +1518,19 @@ void serialCMD() {
         serialp(1); // Print line
       }
 
+      //---------------
       // Set Boostcontrol menu
+      //---------------
+
       else if (S_inData == "Sbc\n") {
         serialp(1); // Print line
         serialp(6); // Print "Enter new value or 9999 to skip "
         serialp(1); // Print line
 
+        //---------------
         //use_static_boost
+        //---------------
+
         Serial.print(F("use_static_boost (1=ON/0=OFF): "));
         S_int = Serial.parseInt();          //transfer number to num
         if (S_int == 1) {
@@ -1285,7 +1549,10 @@ void serialCMD() {
           serialp(5); // Print " Skipped *out of range*"
         }
 
+        //---------------
         //boost_static
+        //---------------
+
         Serial.print(F("boost_static (kpa): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < map_maxkpa - 1) && (S_int > map_minkpa + 1)) {
@@ -1304,7 +1571,10 @@ void serialCMD() {
           Serial.println(map_maxkpa - 1);
         }
 
+        //---------------
         //boost_wanted_min
+        //---------------
+
         Serial.print(F("boost_wanted_min (kpa): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < map_maxkpa - 1) && (S_int > map_minkpa + 1)) {
@@ -1323,7 +1593,10 @@ void serialCMD() {
           Serial.println(map_maxkpa - 1);
         }
 
+        //---------------
         //boost_wanted_max
+        //---------------
+
         Serial.print(F("boost_wanted_max (kpa): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int < map_maxkpa - 1) && (S_int > map_minkpa + 1)) {
@@ -1342,7 +1615,10 @@ void serialCMD() {
           Serial.println(map_maxkpa - 1);
         }
 
+        //---------------
         //tps_maxboost
+        //---------------
+
         Serial.print(F("tps_maxboost (%): "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int <= 100) && (S_int >= 0)) {
@@ -1361,7 +1637,10 @@ void serialCMD() {
           Serial.println("100");
         }
 
+        //---------------
         // Save and exit
+        //---------------
+
         SaveParameters();
         serialp(7); // Print "*** Saved ***"
       }
@@ -1370,7 +1649,10 @@ void serialCMD() {
       // PID
       // *****************
 
+      //---------------
       // Show Settings
+      //---------------
+
       else if (S_inData == "spid\n") {
         serialp(1); // Print line
         Serial.print(F("PID_Kp: "));
@@ -1382,14 +1664,20 @@ void serialCMD() {
         serialp(1); // Print line
       }
 
+      //---------------
       // Set PID menu
+      //---------------
+
       else if (S_inData == "Spid\n") {
         serialp(1); // Print line
         serialp(6); // Print "Enter new value or 9999 to skip "
         Serial.println(F("Input without dot, Example 100 = 1.00"));
         serialp(1); // Print line
 
+        //---------------
         //PID_Kp
+        //---------------
+
         Serial.print(F("PID_Kp : "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int <= 1000) && (S_int >= 0)) {
@@ -1408,7 +1696,10 @@ void serialCMD() {
           Serial.println("1000");
         }
 
+        //---------------
         //PID_Ki
+        //---------------
+
         Serial.print(F("PID_Ki : "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int <= 1000) && (S_int >= 0)) {
@@ -1427,7 +1718,10 @@ void serialCMD() {
           Serial.println("1000");
         }
 
+        //---------------
         //PID_Kd
+        //---------------
+
         Serial.print(F("PID_Kd : "));
         S_int = Serial.parseInt();          //transfer number to num
         if ((S_int <= 1000) && (S_int >= 0)) {
@@ -1446,7 +1740,10 @@ void serialCMD() {
           Serial.println("1000");
         }
 
+        //---------------
         // Save and exit
+        //---------------
+
         myPID.SetTunings(PID_Kp, PID_Ki, PID_Kd);
         SaveParameters();
         serialp(7); // Print "*** Saved ***"
@@ -1460,15 +1757,24 @@ void serialCMD() {
       //else {
       //  Serial.println("Command not found. Press h for help.");
       //}
+
+      // *****************
       // Clear recieved buffer
+      // *****************
+
       S_inData = "";
+
     }
+
   }
+
 }
+
 
 // ************************************************
 // Serialprint (save memory/program storage space)
 // ************************************************
+
 int serialp(int val) {
 
   if ( val == 0 ) {
@@ -1500,8 +1806,8 @@ int serialp(int val) {
 // ************************************************
 // Save any parameter changes to EEPROM
 // ************************************************
-void SaveParameters()
-{
+
+void SaveParameters() {
 
   if (PID_Kp != EEPROM_readDouble(PID_Kp_Address))
   {
@@ -1576,8 +1882,9 @@ void SaveParameters()
 // ************************************************
 // Load parameters from EEPROM
 // ************************************************
-void LoadParameters()
-{
+
+void LoadParameters() {
+
   // Load from EEPROM
   PID_Kp = EEPROM_readDouble(PID_Kp_Address);
   PID_Ki = EEPROM_readDouble(PID_Ki_Address);
@@ -1673,8 +1980,9 @@ void LoadParameters()
 // ************************************************
 // Write floating point values to EEPROM
 // ************************************************
-void EEPROM_writeDouble(int address, double value)
-{
+
+void EEPROM_writeDouble(int address, double value) {
+
   byte* p = (byte*)(void*)&value;
   for (int i = 0; i < sizeof(value); i++)
   {
@@ -1685,8 +1993,9 @@ void EEPROM_writeDouble(int address, double value)
 // ************************************************
 // Read floating point values from EEPROM
 // ************************************************
-double EEPROM_readDouble(int address)
-{
+
+double EEPROM_readDouble(int address) {
+
   double value = 0.0;
   byte* p = (byte*)(void*)&value;
   for (int i = 0; i < sizeof(value); i++)
